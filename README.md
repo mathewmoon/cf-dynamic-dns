@@ -7,3 +7,4 @@ TODO:
   Accept cmdline args for log and config locations
   Set a better name for the default config path
   Init script should check process table against PID file
+  Export variables so that configuration and signal handling can be put into methods outside of main
