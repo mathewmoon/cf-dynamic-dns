@@ -8,6 +8,9 @@ import (
   "time"
   "log"
   "net/http"
+  "github.com/facebookgo/pidfile"
+//  "syscall"
+  "os/signal"
   toml "github.com/BurntSushi/toml"
 )
 
@@ -80,7 +83,47 @@ func getCurrentIp() (string, error) {
   }
 }
 
+func receiveSig(signalCh chan os.Signal, doneCh chan struct{}) {
+  for {
+    select {
+    case <-signalCh:
+      os.Remove(pidfile.GetPidfilePath())
+      os.Exit(1)
+      doneCh <- struct{}{}
+    }
+  }
+}
+
 func main() {
+
+  /* Configure the pid file */
+  pidfile.SetPidfilePath("/var/run/cfupdater.pid")
+  pidfile.Write()
+
+  doneCh := make(chan struct{})
+  signalCh := make(chan os.Signal, 1)
+  signal.Notify(signalCh, os.Interrupt)
+  go receiveSig(signalCh, doneCh)
+  <-doneCh
+
+
+
+
+
+
+
+
+  /*
+  sigs := make(chan os.Signal, 1)
+
+  signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+  go func() {
+    os.Remove(pidfile.GetPidfilePath())
+    <-sigs
+    done <- true
+  }()
+*/
+  /* Load the config */
   config,err := LoadConfig()
   if err != nil {
     fmt.Println(err)
