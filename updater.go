@@ -9,7 +9,6 @@ import (
   "log"
   "net/http"
   "github.com/facebookgo/pidfile"
-//  "syscall"
   "os/signal"
   toml "github.com/BurntSushi/toml"
 )
@@ -106,23 +105,6 @@ func main() {
   go receiveSig(signalCh, doneCh)
   <-doneCh
 
-
-
-
-
-
-
-
-  /*
-  sigs := make(chan os.Signal, 1)
-
-  signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
-  go func() {
-    os.Remove(pidfile.GetPidfilePath())
-    <-sigs
-    done <- true
-  }()
-*/
   /* Load the config */
   config,err := LoadConfig()
   if err != nil {
@@ -185,7 +167,7 @@ func main() {
   }
   config.Cloudflare.RecordId = record[0].ID
 
-  for 1 == 1 {
+  for {
     record,err := client.GetSingleRecord(config.Cloudflare.ZoneId, config.Cloudflare.RecordId)
     if err != nil {
       continue
