@@ -1,12 +1,12 @@
 #! /bin/sh -e
 ### BEGIN INIT INFO
 # Provides:           cfupdater
-# Required-Start:     $network 
-# Required-Stop:      $network 
+# Required-Start:     $network
+# Required-Stop:      $network
 # Default-Start:      2 3 4 5
 # Default-Stop:       0 1 6
 # Short-Description:  Cloudflare dynamic DNS
-# Description:        Cloudflare Dynamic DNS Updatre 
+# Description:        Cloudflare Dynamic DNS Updatre
 ### END INIT INFO
 #
 # Author:    Mathew Moon <me@mathewmoon.net>
@@ -37,21 +37,21 @@ case "$1" in
   		echo "Updater is stopped"
 	fi
   	;;
-  	
+
   restart)
   	if [ -f /var/run/cfupdater.pid ]; then
   		echo "Stopping Updater"
-  		kill $(/var/run/cfupdater.pid)
-  	fi	
+  		kill $(cat /var/run/cfupdater.pid)
+  	fi
   	echo "Starting Updater"
   	/bin/cfupdater 2>&1 >/dev/null &
   	;;
-  	
+
   status)
   	if [ -f /var/run/cfupdater.pid ]; then
   		echo "Updater is running with PID "$(cat /var/run/cfupdater.pid)
   	else
-  		echo "Updater is stopped"		
+  		echo "Updater is stopped"
   	fi
-  	;;	
-esac				
+  	;;
+esac
