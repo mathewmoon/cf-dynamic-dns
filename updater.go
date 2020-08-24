@@ -147,41 +147,51 @@ func main() {
   client.Domain = config.Cloudflare.Zone
   client.Token = config.Cloudflare.Key
 
-  /* Get the zone ID for future calls */
-  domain, err := client.GetZone();
-  if err != nil {
-    log.Print(client.GetError())
-    os.Exit(1)
-  }
+  INIT_LOOP:
+    for {
+      /* Get the zone ID for future calls */
+      domain, err := client.GetZone();
+      if err != nil {
+        log.Print(`Could not GetZone ` + client.GetError())
+        time.Sleep(2 * time.Second)
+        continue INIT_LOOP
+      }
+      log.Print(domain)
+      config.Cloudflare.ZoneId = domain[0].ID
 
-  config.Cloudflare.ZoneId = domain[0].ID
+      /* Get the record ID for future calls */
+      record, err := client.GetRecord(config.Cloudflare.Record, config.Cloudflare.RecordType)
+      if err != nil {
+        log.Print(`Could not GetRecord ` + err.Error())
+        time.Sleep(2 * time.Second)
+        continue
+      }
 
-  /* Get the record ID for future calls */
-  record, err := client.GetRecord(config.Cloudflare.Record, config.Cloudflare.RecordType)
-  if err != nil {
-    log.Print(err)
-    os.Exit(1)
-  }
-  config.Cloudflare.RecordId = record[0].ID
-
-  for {
-    record,err := client.GetSingleRecord(config.Cloudflare.ZoneId, config.Cloudflare.RecordId)
-    if err != nil {
-      continue
-    }
-    cfIp := record.Content
-
-    currentIp,err := getCurrentIp()
-    if err != nil {
-      continue
+      config.Cloudflare.RecordId = record[0].ID
+      break
     }
 
-    if currentIp != cfIp {
-      var data = []byte(`{"type": "` + config.Cloudflare.RecordType + `", "name": "` + config.Cloudflare.Record + `", "content": "` + currentIp +  `", "ttl": ` + config.Cloudflare.Ttl + `, "proxied":false}`)
-      client.UpdateRecord(config.Cloudflare.RecordId, data)
-      log.Print("Updated IP address from " + cfIp + " to " + currentIp)
-    }
+  log.Print(`Init complete: ` + config.Cloudflare.RecordId)
 
-    time.Sleep(10 * time.Second)
+  MAIN_LOOP:
+    for {
+      record,err := client.GetSingleRecord(config.Cloudflare.ZoneId, config.Cloudflare.RecordId)
+      if err != nil {
+        continue MAIN_LOOP
+      }
+      cfIp := record.Content
+
+      currentIp,err := getCurrentIp()
+      if err != nil {
+        continue MAIN_LOOP
+      }
+
+      if currentIp != cfIp {
+        var data = []byte(`{"type": "` + config.Cloudflare.RecordType + `", "name": "` + config.Cloudflare.Record + `", "content": "` + currentIp +  `", "ttl": ` + config.Cloudflare.Ttl + `, "proxied":false}`)
+        client.UpdateRecord(config.Cloudflare.RecordId, data)
+        log.Print("Updated IP address from " + cfIp + " to " + currentIp)
+      }
+
+      time.Sleep(10 * time.Second)
+    }
   }
-}
