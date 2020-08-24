@@ -68,7 +68,7 @@ func LoadConfig() (*Config, error) {
 }
 
 func getCurrentIp() (string, error) {
-  resp, err := http.Get("https://api.ipify.org")
+  resp, err := http.Get("http://api.ipify.org")
   if err != nil {
     return " ", err
   }else{
@@ -177,12 +177,17 @@ func main() {
     for {
       record,err := client.GetSingleRecord(config.Cloudflare.ZoneId, config.Cloudflare.RecordId)
       if err != nil {
+        log.Print(`Could not GetSingleRecord ` + err.Error())
+        time.Sleep(10 * time.Second)
         continue MAIN_LOOP
+
       }
       cfIp := record.Content
 
       currentIp,err := getCurrentIp()
       if err != nil {
+        log.Print(`Could not getCurrentIp ` + err.Error())
+        time.Sleep(10 * time.Second)
         continue MAIN_LOOP
       }
 
@@ -191,7 +196,6 @@ func main() {
         client.UpdateRecord(config.Cloudflare.RecordId, data)
         log.Print("Updated IP address from " + cfIp + " to " + currentIp)
       }
-
       time.Sleep(10 * time.Second)
     }
   }
